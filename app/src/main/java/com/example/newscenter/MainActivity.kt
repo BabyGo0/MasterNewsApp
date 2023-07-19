@@ -3,53 +3,35 @@ package com.example.newscenter
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
-import androidx.compose.foundation.layout.fillMaxSize
+import androidx.activity.viewModels
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
-import androidx.compose.material3.Text
-import androidx.compose.runtime.Composable
-import androidx.compose.ui.Modifier
-import androidx.room.Room
-import com.example.newscenter.db.AppDatabase
-import com.example.newscenter.db.User
+import androidx.core.view.WindowCompat
+import com.example.newscenter.db.App
+import com.example.newscenter.spider.Spider
+import com.example.newscenter.ui.model.LoginViewModel
+import com.example.newscenter.ui.page.MainPage
 import com.example.newscenter.ui.theme.NewsCenterTheme
 
 class MainActivity : ComponentActivity() {
+
+    private val spider = Spider()
     override fun onCreate(savedInstanceState: Bundle?) {
+        val loginViewModel: LoginViewModel by viewModels()
         super.onCreate(savedInstanceState)
-//        val db = createDatabase()
-//        val userDao = db.userDao()
-//        userDao.insertUsers(User("John", "test"))
-//        userDao.getAll().toString()
+        WindowCompat.setDecorFitsSystemWindows(window, false)
         setContent {
             NewsCenterTheme {
                 // A surface container using the 'background' color from the theme
-                Surface(modifier = Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
-                    Greeting("Android")
+                Surface(
+                    color = MaterialTheme.colorScheme.background
+                ) {
+                    MainPage(loginViewModel)
+
                 }
             }
         }
     }
-    fun createDatabase(): AppDatabase {
-        return Room.databaseBuilder(
-            applicationContext,
-            AppDatabase::class.java, "news-center"
-        ).build()
-    }
-}
 
-@Composable
-fun Greeting(name: String, modifier: Modifier = Modifier) {
-    Text(
-            text = "Hello $name!",
-            modifier = modifier
-    )
-}
 
-//@Preview(showBackground = true)
-//@Composable
-//fun GreetingPreview() {
-//    NewsCenterTheme {
-//        Greeting("Android")
-//    }
-//}
+}
