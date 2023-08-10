@@ -8,16 +8,18 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.window.DialogProperties
 import androidx.compose.ui.window.SecureFlagPolicy
+import androidx.navigation.NavHostController
 import com.example.newscenter.db.App
 import com.example.newscenter.db.User
 import com.example.newscenter.ui.model.AppViewModel
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 
 @Composable
-fun SignUpDialog(loginViewModel: AppViewModel) {
+fun SignUpDialog(navController: NavHostController, loginViewModel: AppViewModel) {
     val dialogState by loginViewModel.dialogState.collectAsState()
     val username by loginViewModel.username.collectAsState()
     val password by loginViewModel.password.collectAsState()
@@ -25,7 +27,7 @@ fun SignUpDialog(loginViewModel: AppViewModel) {
     if (dialogState) {
         AlertDialog(
             onDismissRequest = {
-                loginViewModel.changeDialogState()
+                loginViewModel.closeDialog()
             },
             title = { Text(text = "Sign Up") },
             //显示有关对话框目的的详细信息的文本。提供的文本样式默认为 Typography.body1
@@ -38,10 +40,15 @@ fun SignUpDialog(loginViewModel: AppViewModel) {
                 TextButton(
                     onClick = {
                         CoroutineScope(Dispatchers.IO).launch {
-                            val user = User(username,password)
-                            userDao.insertUsers(user)
+                            val user = User(username = username, password = password)
+                            userDao.insert(user)
+                            loginViewModel.onUserChange(user)
+                            withContext(Dispatchers.Main) {
+                                loginViewModel.closeDialog()
+                                navController.navigate("user_page")
+                            }
                         }
-                        loginViewModel.changeDialogState()
+
                     }
                 ) {
                     Text("Yes")
@@ -51,7 +58,7 @@ fun SignUpDialog(loginViewModel: AppViewModel) {
             dismissButton = {
                 TextButton(
                     onClick = {
-                        loginViewModel.changeDialogState()
+                        loginViewModel.closeDialog()
                     }
                 ) {
                     Text("No")

@@ -1,4 +1,5 @@
 import android.util.Log
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
@@ -14,10 +15,12 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
+import com.example.newscenter.R
 import com.example.newscenter.db.App
 import com.example.newscenter.ui.model.AppViewModel
 import com.example.newscenter.ui.view.SignUpDialog
@@ -32,12 +35,14 @@ fun LoginView(navController: NavHostController, model: AppViewModel) {
     val focusManager = LocalFocusManager.current
     val username by model.username.collectAsState()
     val password by model.password.collectAsState()
+    val currentUser by model.currentUser.collectAsState()
     val maxLength = 36
     Column(
         modifier = Modifier.fillMaxSize(),
         verticalArrangement = Arrangement.Center,
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
+        Image(painter = painterResource(id = R.drawable.user_page), contentDescription = null)
         OutlinedTextField(
             value = username,
             onValueChange = {
@@ -69,19 +74,22 @@ fun LoginView(navController: NavHostController, model: AppViewModel) {
             onClick = {
                 //使用协程操作数据库
                 CoroutineScope(Dispatchers.IO).launch {
-                    val users = userDao.getUser(username)
+                    val users = userDao.getByName(username)
                     if (users.isEmpty()) {
-                        model.changeDialogState()
+                        model.openDialog()
                     } else {
                         if (users[0].password == password) {
-                            Log.i("登录", users[0].toString())
+                            Log.i("登录成功", users[0].toString())
+                            model.onUserChange(users[0])
+                            val temp = App.db.favoriteDao().getByUserId(users[0].id)
+                            model.onFavoritesChange(temp.toMutableList())
                             //此处需要切换回主线程
                             withContext(Dispatchers.Main) {
-                                navController.navigate("home_page")
+                                navController.navigate("user_page")
                             }
-                        }
-                        else{
-                            model.changeDialogState()
+                        } else {
+                            Log.e("登录失败", users[0].toString())
+                            model.closeDialog()
                         }
                     }
                 }
@@ -91,6 +99,7 @@ fun LoginView(navController: NavHostController, model: AppViewModel) {
         {
             Text("Login")
         }
-        SignUpDialog(loginViewModel = model)
+        SignUpDialog(navController = navController, loginViewModel = model)
     }
 }
+

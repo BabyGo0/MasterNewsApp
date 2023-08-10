@@ -1,6 +1,10 @@
 package com.example.newscenter.ui.model
 
 import androidx.lifecycle.ViewModel
+import com.example.newscenter.db.App
+import com.example.newscenter.db.Favorite
+import com.example.newscenter.db.News
+import com.example.newscenter.db.User
 import com.example.newscenter.spider.NewsItem
 import com.example.newscenter.spider.Parser
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -12,17 +16,17 @@ class AppViewModel : ViewModel() {
     private val _username = MutableStateFlow("")
     private val _password = MutableStateFlow("")
     private val _dialogState = MutableStateFlow(false)
-    private val _onMainPage = MutableStateFlow(true)
-    private val _newsList = MutableStateFlow(mutableListOf<NewsItem>())
-    private val _newsContent: MutableStateFlow<NewsItem?> = MutableStateFlow(null)
-    val newsList: StateFlow<MutableList<NewsItem>> = _newsList.asStateFlow()
+    private val _newsList = MutableStateFlow(listOf<News>())
+    private val _currentNews: MutableStateFlow<News?> = MutableStateFlow(null)
+    private val _currentUser: MutableStateFlow<User?> = MutableStateFlow(null)
+    private val _currentFavorites = MutableStateFlow(mutableListOf<Favorite?>())
+    val newsList: StateFlow<List<News>> = _newsList.asStateFlow()
     val username: StateFlow<String> = _username.asStateFlow()
     val password: StateFlow<String> = _password.asStateFlow()
     val dialogState: StateFlow<Boolean> = _dialogState.asStateFlow()
-    val onMainPage: StateFlow<Boolean> = _onMainPage.asStateFlow()
-    val newsContent: StateFlow<NewsItem?> = _newsContent.asStateFlow()
-    val shareable: MutableStateFlow<Boolean> = MutableStateFlow(false)
-
+    val currentNews: StateFlow<News?> = _currentNews.asStateFlow()
+    val currentUser: StateFlow<User?> = _currentUser.asStateFlow()
+    val currentFavorites: StateFlow<MutableList<Favorite?>> = _currentFavorites.asStateFlow()
     private val parser = Parser()
 
     fun onNameChange(msg: String) {
@@ -33,16 +37,37 @@ class AppViewModel : ViewModel() {
         _password.value = msg
     }
 
-    fun changeDialogState() {
-        _dialogState.value = !dialogState.value
+    fun onUserChange(user: User) {
+        _currentUser.value = user
     }
 
-    fun setNews(news: List<NewsItem>) {
-        _newsList.value = news.toMutableList()
+    fun onFavoritesChange(favorites: MutableList<Favorite?>) {
+        _currentFavorites.value = favorites
     }
 
-    fun changeNewsContent(newsItem: NewsItem) {
-        newsItem.content = parser.getContent(newsItem.docurl)
-        _newsContent.value = newsItem
+
+    fun openDialog() {
+        _dialogState.value = true
+    }
+
+    fun closeDialog() {
+        _dialogState.value = false
+    }
+
+    fun setNews(news: List<News>) {
+        _newsList.value = news
+    }
+
+    fun setNewsContent(news: News) {
+        if (news.content == null) {
+            news.content = parser.getContent(news.docurl)
+            App.db.newsDao().update(news.title, news.content!!)
+        }
+        _currentNews.value = news
+
+    }
+
+    fun setFavorContent(news: News) {
+        _currentNews.value = news
     }
 }
