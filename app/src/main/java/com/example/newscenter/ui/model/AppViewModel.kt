@@ -5,7 +5,6 @@ import com.example.newscenter.db.App
 import com.example.newscenter.db.Favorite
 import com.example.newscenter.db.News
 import com.example.newscenter.db.User
-import com.example.newscenter.spider.NewsItem
 import com.example.newscenter.spider.Parser
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -20,6 +19,12 @@ class AppViewModel : ViewModel() {
     private val _currentNews: MutableStateFlow<News?> = MutableStateFlow(null)
     private val _currentUser: MutableStateFlow<User?> = MutableStateFlow(null)
     private val _currentFavorites = MutableStateFlow(mutableListOf<Favorite?>())
+    private val _selectedTabIndex = MutableStateFlow(0)
+    private val _recommends = MutableStateFlow(mutableListOf<News>())
+    private val _temperature:MutableStateFlow<String> = MutableStateFlow("")
+    val temperature:StateFlow<String> = _temperature.asStateFlow()
+    val recommends: StateFlow<List<News>> = _recommends.asStateFlow()
+    val selectedTabIndex: StateFlow<Int> = _selectedTabIndex.asStateFlow()
     val newsList: StateFlow<List<News>> = _newsList.asStateFlow()
     val username: StateFlow<String> = _username.asStateFlow()
     val password: StateFlow<String> = _password.asStateFlow()
@@ -37,7 +42,7 @@ class AppViewModel : ViewModel() {
         _password.value = msg
     }
 
-    fun onUserChange(user: User) {
+    fun onUserChange(user: User?) {
         _currentUser.value = user
     }
 
@@ -69,5 +74,16 @@ class AppViewModel : ViewModel() {
 
     fun setFavorContent(news: News) {
         _currentNews.value = news
+    }
+
+    fun setTab(tabIndex: Int) {
+        _selectedTabIndex.value = tabIndex
+    }
+    fun addRecommends(items:List<News>) {
+        _recommends.value.addAll(items)
+    }
+
+    fun setTemperature(temp:String){
+        _temperature.value = temp
     }
 }
